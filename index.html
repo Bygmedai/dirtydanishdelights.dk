@@ -877,9 +877,125 @@ section { padding: 100px 0; }
 }
 
 .bygmedai-badge a { color: var(--gold-muted); }
+
+/* ===== PROFILE CARD LINKS ===== */
+.profile-card a {
+  display: block;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+.profile-card-overlay .profile-card-link {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--gold);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.profile-card:hover .profile-card-link {
+  opacity: 1;
+}
+
+/* ===== 18+ AGE GATE ===== */
+.age-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--black);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.age-gate-inner {
+  max-width: 440px;
+  padding: 40px;
+}
+.age-gate-logo {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 300;
+  color: var(--gold);
+  letter-spacing: 0.08em;
+  text-transform: lowercase;
+  font-style: italic;
+  margin-bottom: 32px;
+}
+.age-gate h2 {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 300;
+  font-style: italic;
+  color: var(--champagne);
+  margin-bottom: 12px;
+}
+.age-gate p {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+.age-gate-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+.age-gate .btn-gold {
+  display: inline-block;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--black);
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  padding: 14px 36px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.4s;
+}
+.age-gate .btn-gold:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(196,162,101,0.25);
+}
+.age-gate .btn-leave {
+  display: inline-block;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--text-muted);
+  border: 1px solid rgba(196,162,101,0.2);
+  padding: 13px 34px;
+  cursor: pointer;
+  transition: all 0.3s;
+  background: none;
+}
+.age-gate .btn-leave:hover {
+  border-color: var(--text-muted);
+}
+.age-gate.hidden { display: none; }
 </style>
 </head>
 <body>
+
+<!-- ===== 18+ AGE GATE ===== -->
+<div class="age-gate" id="ageGate">
+  <div class="age-gate-inner">
+    <div class="age-gate-logo">dirty danish delights</div>
+    <h2>Denne side er kun for voksne</h2>
+    <p>Du skal være mindst 18 år for at besøge denne side. Indholdet er af erotisk karakter og kun beregnet til myndige personer.</p>
+    <div class="age-gate-buttons">
+      <button class="btn-gold" onclick="document.getElementById('ageGate').classList.add('hidden'); sessionStorage.setItem('age_verified','true');">Jeg er 18+</button>
+      <button class="btn-leave" onclick="window.location.href='https://google.dk';">Forlad siden</button>
+    </div>
+  </div>
+</div>
+<script>if(sessionStorage.getItem('age_verified')==='true'){document.getElementById('ageGate').classList.add('hidden');}</script>
 
 <!-- ===== NAVIGATION ===== -->
 <nav class="nav">
@@ -1046,82 +1162,96 @@ section { padding: 100px 0; }
 
       <!-- Julie -->
       <div class="profile-card">
+        <a href="piger/julie.html" aria-label="Se Julies profil"></a>
         <img src="web-assets/piger/julie.jpg" alt="Julie" loading="lazy">
         <div class="profile-card-overlay">
           <div class="profile-card-name">Julie</div>
-          <div class="profile-card-age">47 — dansk MILF</div>
+          <div class="profile-card-age">47 — dansk MILF — sygeplejerske</div>
           <div class="profile-card-stats">
             <span class="profile-stat">168 / 62</span>
             <span class="profile-stat">D</span>
             <span class="profile-stat special">Anal</span>
           </div>
+          <div class="profile-card-link">Se profil →</div>
         </div>
       </div>
 
       <!-- Maja -->
       <div class="profile-card">
+        <a href="piger/maja.html" aria-label="Se Majas profil"></a>
         <img src="web-assets/piger/maja.jpg" alt="Maja" loading="lazy">
         <div class="profile-card-overlay">
           <div class="profile-card-name">Maja</div>
-          <div class="profile-card-age">Mørk skønhed — dansk</div>
+          <div class="profile-card-age">Mørk skønhed — dansk — sygeplejerske</div>
           <div class="profile-card-stats">
             <span class="profile-stat">162 / 52</span>
             <span class="profile-stat">D</span>
           </div>
+          <div class="profile-card-link">Se profil →</div>
         </div>
       </div>
 
       <!-- Lotus -->
       <div class="profile-card">
+        <a href="piger/lotus.html" aria-label="Se Lotus' profil"></a>
         <img src="web-assets/piger/lotus.jpg" alt="Lotus" loading="lazy">
         <div class="profile-card-overlay">
           <div class="profile-card-name">Lotus</div>
-          <div class="profile-card-age">Vikinge-MILF — domina</div>
+          <div class="profile-card-age">Vikinge-MILF — domina — sygeplejerske</div>
           <div class="profile-card-stats">
             <span class="profile-stat">167 / 66</span>
             <span class="profile-stat">Naturlig</span>
             <span class="profile-stat special">Anal</span>
           </div>
+          <div class="profile-card-link">Se profil →</div>
         </div>
       </div>
 
       <!-- Camilla -->
       <div class="profile-card">
+        <a href="piger/camilla.html" aria-label="Se Camillas profil"></a>
         <img src="web-assets/piger/camilla.jpg" alt="Camilla" loading="lazy">
         <div class="profile-card-overlay">
           <div class="profile-card-name">Camilla</div>
-          <div class="profile-card-age">23 — kinky & ægte liderlig</div>
+          <div class="profile-card-age">23 — kinky — sygeplejerske</div>
           <div class="profile-card-stats">
             <span class="profile-stat">176 / 75</span>
             <span class="profile-stat">D</span>
             <span class="profile-stat special">Kinky</span>
           </div>
+          <div class="profile-card-link">Se profil →</div>
         </div>
       </div>
 
       <!-- Saga -->
       <div class="profile-card">
+        <a href="piger/saga.html" aria-label="Se Sagas profil"></a>
         <img src="web-assets/piger/saga.jpg" alt="Saga" loading="lazy">
         <div class="profile-card-overlay">
           <div class="profile-card-name">Saga</div>
-          <div class="profile-card-age">29 — gudesmuk</div>
+          <div class="profile-card-age">29 — gudesmuk — sygeplejerske</div>
           <div class="profile-card-stats">
             <span class="profile-stat">166 / 62</span>
             <span class="profile-stat">DD</span>
             <span class="profile-stat special">Elsker flere</span>
           </div>
+          <div class="profile-card-link">Se profil →</div>
         </div>
       </div>
 
       <!-- Amy -->
       <div class="profile-card">
+        <a href="piger/amy.html" aria-label="Se Amys profil"></a>
         <img src="web-assets/piger/amy.jpg" alt="Amy" loading="lazy">
         <div class="profile-card-overlay">
           <div class="profile-card-name">Amy</div>
-          <div class="profile-card-age">Dansk</div>
+          <div class="profile-card-age">29 — polsk — sygeplejerske</div>
           <div class="profile-card-stats">
-            <span class="profile-stat">Mere snart</span>
+            <span class="profile-stat">168 / 66</span>
+            <span class="profile-stat">D</span>
+            <span class="profile-stat special">Nærvær</span>
           </div>
+          <div class="profile-card-link">Se profil →</div>
         </div>
       </div>
 
