@@ -1,0 +1,147 @@
+name: Quality Gate
+
+on:
+  push:
+    branches: [main, staging]
+  pull_request:
+    branches: [main]
+
+jobs:
+  html-validate:
+    name: HTML Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install -g html-validate
+      - name: Validate all HTML files
+        run: |
+          # Find all HTML files (skip node_modules and backups)
+          FILES=$(find . -name "*.html" -not -path "*/node_modules/*" -not -name "*backup*" | sort)
+          if [ -z "$FILES" ]; then
+            echo "No HTML files found"
+            exit 0
+          fi
+          html-validate $FILES || true
+          ERRORS=$(html-validate $FILES 2>&1 | grep -c "error" || true)
+          if [ "$ERRORS" -gt 0 ]; then
+            echo "::error::Found $ERRORS HTML validation errors"
+            exit 1
+          fi
+
+  broken-links:
+    name: Broken Link Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install -g linkinator
+      - name: Start local server
+        run: |
+          npx http-server . -p 8080 -s &
+          sleep 2
+      - name: Check internal links
+        run: |
+          linkinator http://localhost:8080 --recurse --skip "^(?!http://localhost)" --format json --timeout 10000 > link-report.json || true
+          BROKEN=$(cat link-report.json | python3 -c "
+          import json, sys
+          data = json.load(sys.stdin)
+          broken = [l for l in data.get('links', []) if l.get('status', 0) >= 400]
+          for l in broken:
+              print(f'  {l[chr(39)+'status'+chr(39)]} {l[chr(39)+'url'+chr(39)]}')
+          sys.exit(1 if broken else 0)
+          ") && echo "No broken links found" || { echo "::error::Broken links found"; echo "$BROKEN"; exit 1; }
+
+  lighthouse:
+    name: Lighthouse Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: |
+          npm install -g @lhci/cli
+          npm install -g http-server
+      - name: Start local server
+        run: |
+          http-server . -p 8080 -s &
+          sleep 2
+      - name: Run Lighthouse on key pages
+        run: |
+          # Auto-discover HTML files (max 6 for CI speed)
+          PAGES=()
+          # Always include index.html first if it exists
+          if [ -f "index.html" ]; then
+            PAGES+=("http://localhost:8080/index.html")
+          fi
+          # Add other root-level HTML files (up to 5 more)
+          for f in $(find . -maxdepth 1 -name "*.html" -not -name "index.html" -not -name "*backup*" | sort | head -5); do
+            PAGE=$(basename "$f")
+            PAGES+=("http://localhost:8080/$PAGE")
+          done
+          if [ ${#PAGES[@]} -eq 0 ]; then
+            echo "No HTML pages found for Lighthouse"
+            exit 0
+          fi
+          FAILED=0
+          for URL in "${PAGES[@]}"; do
+            PAGE=$(echo "$URL" | sed 's|.*/||')
+            echo "=== Testing $PAGE ==="
+            lhci collect --url="$URL" --settings.chromeFlags="--no-sandbox --headless" || true
+            REPORT=$(ls -t .lighthouseci/lhr-*.json 2>/dev/null | head -1)
+            if [ -f "$REPORT" ]; then
+              python3 -c "
+          import json, sys
+          data = json.load(open(sys.argv[1]))
+          cats = data.get('categories', {})
+          perf = int(cats.get('performance', {}).get('score', 0) * 100)
+          a11y = int(cats.get('accessibility', {}).get('score', 0) * 100)
+          seo = int(cats.get('seo', {}).get('score', 0) * 100)
+          bp = int(cats.get('best-practices', {}).get('score', 0) * 100)
+          print(f'  Performance: {perf} | Accessibility: {a11y} | SEO: {seo} | Best Practices: {bp}')
+          failed = []
+          if a11y < 90: failed.append(f'Accessibility {a11y} < 90')
+          if seo < 90: failed.append(f'SEO {seo} < 90')
+          if failed:
+              for f in failed: print(f'  ::warning::{f}')
+              sys.exit(1)
+          " "$REPORT"
+              if [ $? -ne 0 ]; then FAILED=1; fi
+            fi
+          done
+          if [ $FAILED -eq 1 ]; then
+            echo "::error::One or more pages failed Lighthouse gates"
+            exit 1
+          fi
+
+  playwright:
+    name: Smoke Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install Playwright
+        run: |
+          npm init -y
+          npm install @playwright/test
+          npx playwright install chromium --with-deps
+      - name: Start local server
+        run: |
+          npx http-server . -p 8080 -s &
+          sleep 2
+      - name: Run smoke tests
+        run: npx playwright test tests/ --reporter=list
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: tests/screenshots/
+          retention-days: 7
