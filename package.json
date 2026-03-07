@@ -1,0 +1,14 @@
+{
+  "name": "quality-gate",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "npx playwright test tests/ --reporter=list",
+    "test:serve": "npx http-server . -p 8080 -s &",
+    "test:screenshots": "npx playwright test tests/ --reporter=list --grep='Screenshots'"
+  },
+  "dependencies": {
+    "@playwright/test": "^1.58.2",
+    "http-server": "^14.1.1"
+  }
+}
