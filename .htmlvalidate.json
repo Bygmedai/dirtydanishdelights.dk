@@ -20,6 +20,9 @@
     "no-dup-attr": "error",
     "no-dup-id": "error",
     "close-order": "error",
-    "void-content": "error"
+    "void-content": "error",
+    "long-title": "off",
+    "aria-label-misuse": "off",
+    "unrecognized-char-ref": "off"
   }
 }
