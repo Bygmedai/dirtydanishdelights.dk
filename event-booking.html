@@ -2,17 +2,6 @@
 <html lang="da">
 <head>
 <meta charset="UTF-8">
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-3SXB4HNYYK"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-3SXB4HNYYK');
-</script>
-<script type="application/ld+json">
-{"@context": "https://schema.org", "@type": "WebPage", "name": "Book et event — Dirty Danish Delights", "url": "https://dirtydanishdelights.dk/event-booking.html", "description": "Arrangér dit eget private event med Dirty Danish Delights.", "isPartOf": {"@type": "WebSite", "name": "Dirty Danish Delights", "url": "https://dirtydanishdelights.dk"}}
-</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Book et Event — Dirty Danish Delights</title>
 <meta name="description" content="Book et privat event hos Dirty Danish Delights. Polterabend, firmafest, privatfest eller noget helt tredje.">
@@ -544,10 +533,7 @@ a:hover { color: var(--gold-light); }
     <p>Events starter typisk fra <strong>5.000 kr</strong> afhængig af antal piger, varighed og ønsker.</p>
   </div>
 
-  <div style="background:rgba(196,162,101,0.05); border:1px solid rgba(196,162,101,0.15); padding:16px 20px; margin-bottom:24px; text-align:center;">
-      <p style="color:var(--text-muted); font-size:.82rem; line-height:1.6;">Alle events arrangeres direkte mellem dig og de involverede piger. Dirty Danish Delights formidler kun kontakten.</p>
-    </div>
-    <form class="booking-form" id="eventForm" action="https://formspree.io/f/mlgpegpe" method="POST">
+  <form class="booking-form" id="eventForm" action="https://formspree.io/f/mlgpegpe" method="POST">
 
     <!-- Hidden: Type identifier so email clearly shows EVENT -->
     <input type="hidden" name="_subject" value="&#128308; EVENT-FORESPØRGSEL — Dirty Danish Delights">
@@ -619,6 +605,10 @@ a:hover { color: var(--gold-light); }
         <div class="girl-check">
           <input type="checkbox" id="ev-amy" name="piger" value="Amy">
           <label for="ev-amy"><span class="girl-name">Amy</span><span class="girl-desc">29, polsk, D</span></label>
+        </div>
+        <div class="girl-check">
+          <input type="checkbox" id="ev-saga" name="piger" value="Saga">
+          <label for="ev-saga"><span class="girl-name">Saga</span><span class="girl-desc">29, dansk, DD</span></label>
         </div>
         <div class="girl-check">
           <input type="checkbox" id="ev-surprise" name="piger" value="Overrask os — I vælger">
@@ -770,27 +760,6 @@ a:hover { color: var(--gold-light); }
   <p>Foretrækker I at tale direkte om jeres event?</p>
   <a href="https://t.me/+tMDQF2ihA_5kODdk" target="_blank">Kontakt Bodil på Telegram →</a>
 </div>
-
-
-<!-- ===== JURIDISK DISCLAIMER ===== -->
-<section style="background:var(--dark,#141210); border-top:1px solid rgba(196,162,101,0.08); padding:40px 40px 20px;">
-  <div style="max-width:800px; margin:0 auto; text-align:center;">
-    <p style="font-size:.7rem; text-transform:uppercase; letter-spacing:.2em; color:var(--gold,#C4A265); margin-bottom:16px;">Juridisk information</p>
-    <p style="color:var(--text-muted,#9A8E7E); font-size:.82rem; line-height:1.8; margin-bottom:12px;">
-      Alle kvinder på denne side er selvstændige og uafhængige. De bestemmer selv over deres tid, priser, grænser og kundekontakt. 
-      Dirty Danish Delights er <strong style="color:var(--champagne,#F0E6D4);">ikke et bureau</strong> og fungerer ikke som mellemmand. 
-      Ingen tredjepart tjener på eller kontrollerer de enkelte kvinders aktiviteter.
-    </p>
-    <p style="color:var(--text-muted,#9A8E7E); font-size:.82rem; line-height:1.8; margin-bottom:12px;">
-      Alle ydelser er mellem samtykkende voksne over 18 år. Alt sker frivilligt og på eget initiativ. 
-      Enhver betaling er udelukkende for tid og selskab.
-    </p>
-    <p style="color:var(--text-muted,#9A8E7E); font-size:.78rem; line-height:1.7;">
-      Ved at bruge denne hjemmeside bekræfter du, at du er over 18 år. 
-      <a href="privatlivspolitik.html" style="color:var(--gold,#C4A265);">Privatlivspolitik</a>
-    </p>
-  </div>
-</section>
 
 <footer class="footer">
   <p>&copy; 2026 Dirty Danish Delights &nbsp;·&nbsp; <a href="./">Forside</a> &nbsp;·&nbsp; <a href="booking.html">Privat booking</a> &nbsp;·&nbsp; <a href="./#piger">Alle pigerne</a></p>
