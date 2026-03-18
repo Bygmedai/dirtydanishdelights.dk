@@ -3,48 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="robots" content="noindex, nofollow">
-    <title>Midlertidigt lukket</title>
-    <meta name="description" content="Dirty Danish Delights er midlertidigt lukket. Vi er tilbage snart!">
+    <title>Dirty Danish Delights</title>
+    <meta name="description" content="Dirty Danish Delights — København">
     <link rel="canonical" href="https://dirtydanishdelights.dk/">
-    <meta property="og:title" content="Midlertidigt lukket">
-    <meta property="og:description" content="Dirty Danish Delights er midlertidigt lukket. Vi er tilbage snart!">
+    <meta property="og:title" content="Dirty Danish Delights">
+    <meta property="og:description" content="Dirty Danish Delights — København">
     <meta property="og:url" content="https://dirtydanishdelights.dk/">
     <meta property="og:type" content="website">
     <meta property="og:image" content="https://dirtydanishdelights.dk/web-assets/hero-gold.jpg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #0A0806;
-            color: #F0E6D4;
-            font-family: 'Cormorant Garamond', Georgia, serif;
-        }
-        .container {
-            text-align: center;
-            padding: 2rem;
-        }
-        h1 {
-            font-size: 2rem;
-            color: #C4A265;
-            margin-bottom: 1rem;
-            font-weight: 300;
-            letter-spacing: 0.1em;
-        }
-        p {
-            font-size: 1.1rem;
-            opacity: 0.7;
-            line-height: 1.6;
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{--bg:#0A0806;--text:#F0E6D4;--accent:#C8A87C;--muted:#8A7E72;--card:rgba(200,168,124,0.06);--border:rgba(200,168,124,0.15)}
+        body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;line-height:1.7}
+        h1,h2,h3{font-family:'Cormorant Garamond',Georgia,serif;font-weight:500}
+
+        /* Hero */
+        .hero{min-height:60vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:4rem 2rem;background:linear-gradient(180deg,#0A0806 0%,#1a1510 100%)}
+        .hero h1{font-size:clamp(2.5rem,6vw,4.5rem);margin-bottom:0.5rem;letter-spacing:-0.02em}
+        .hero h1 span{color:var(--accent)}
+        .hero p{color:var(--muted);font-size:1.1rem;max-width:500px;margin:0 auto}
+
+        /* Sections */
+        section{padding:4rem 2rem;max-width:800px;margin:0 auto}
+        section h2{font-size:clamp(1.5rem,3vw,2.2rem);margin-bottom:1.5rem;color:var(--accent);text-align:center}
+
+        /* Loading */
+        #loading{text-align:center;padding:2rem;color:var(--muted)}
+
+        /* Schedule */
+        .schedule-row{display:grid;grid-template-columns:140px 100px 1fr;gap:1rem;padding:1rem 0;border-bottom:1px solid var(--border);align-items:center}
+        .schedule-day{font-weight:600;color:var(--accent)}
+        .schedule-time{color:var(--muted);font-size:0.9rem}
+        .schedule-names{color:var(--text)}
+        .schedule-notes{grid-column:1/-1;font-size:0.85rem;color:var(--muted);font-style:italic}
+
+        /* Profiles */
+        .profile-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.5rem;margin-bottom:1rem}
+        .profile-card h3{font-size:1.3rem;margin-bottom:0.5rem;color:var(--accent)}
+        .profile-card p{color:var(--muted);font-size:0.95rem}
+
+        /* Prices */
+        .price-row{display:flex;justify-content:space-between;align-items:center;padding:0.75rem 0;border-bottom:1px solid var(--border)}
+        .price-row.addon{padding-left:1.5rem;font-size:0.9rem}
+        .price-service{color:var(--text)}
+        .price-duration{color:var(--muted);font-size:0.9rem}
+        .price-amount{font-weight:600;color:var(--accent);white-space:nowrap}
+
+        /* Events */
+        .event-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.5rem;margin-bottom:1rem}
+        .event-date{font-weight:600;color:var(--accent)}
+        .event-time{color:var(--muted);font-size:0.9rem}
+        .event-desc{margin-top:0.5rem}
+        .event-price{margin-top:0.5rem;font-weight:600;color:var(--accent)}
+
+        /* Contact */
+        .contact{text-align:center;padding:3rem 2rem;border-top:1px solid var(--border)}
+        .contact a{color:var(--accent);text-decoration:none}
+        .contact a:hover{text-decoration:underline}
+
+        /* Responsive */
+        @media(max-width:600px){
+            .schedule-row{grid-template-columns:1fr;gap:0.3rem}
+            section{padding:3rem 1.5rem}
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Vi er tilbage snart</h1>
-        <p>Siden er midlertidigt lukket.<br>Vi beklager ulejligheden.</p>
+
+<div class="hero">
+    <div>
+        <h1>Dirty Danish <span>Delights</span></h1>
+        <p>København</p>
     </div>
+</div>
+
+<div id="loading">Indlæser...</div>
+
+<section id="profiler-section">
+    <h2>Hvem kan du møde</h2>
+    <div id="profiler"></div>
+</section>
+
+<section id="vagtskema-section">
+    <h2>Vagtskema</h2>
+    <div id="vagtskema"></div>
+</section>
+
+<section id="events-section">
+    <h2>Events</h2>
+    <div id="events"></div>
+</section>
+
+<section id="priser-section">
+    <h2>Priser</h2>
+    <div id="priser"></div>
+</section>
+
+<div class="contact">
+    <p>Kontakt: <a href="mailto:dirtydanishdelights@gmail.com">dirtydanishdelights@gmail.com</a> | <a href="tel:+4571830322">71 83 03 22</a></p>
+    <p style="margin-top:0.5rem;color:var(--muted);font-size:0.85rem">Amager Strandvej 64, København</p>
+</div>
+
+<script src="sheets-cms.js"></script>
 </body>
 </html>
