@@ -1,0 +1,6 @@
+qa:
+  base_url: https://dirtydanishdelights.dk
+  threshold: 0.02
+  pages:
+    - /
+  flows: []

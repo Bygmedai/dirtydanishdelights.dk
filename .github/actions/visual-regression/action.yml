@@ -1,0 +1,128 @@
+name: 'Playwright Visual Regression'
+description: >
+  Screenshot-based visual regression against the live site.
+  Reads pages, threshold, and viewport from .qa-config.yml.
+  On first run (no baselines committed), generates and commits them.
+  On subsequent runs, compares against committed baselines.
+
+inputs:
+  update-snapshots:
+    description: 'Force-regenerate all baseline screenshots (true/false)'
+    required: false
+    default: 'false'
+
+outputs:
+  diff-found:
+    description: 'true if any visual diff exceeded the threshold'
+    value: ${{ steps.run.outputs.diff-found }}
+  baseline-updated:
+    description: 'true if new baselines were generated and committed'
+    value: ${{ steps.run.outputs.baseline-updated }}
+
+runs:
+  using: composite
+  steps:
+    # ── 1. Parse .qa-config.yml → GITHUB_ENV (using Python shell) ─────────────
+    - name: Parse .qa-config.yml
+      shell: python3 {0}
+      run: |
+        import yaml, json, os, pathlib
+
+        cfg = yaml.safe_load(pathlib.Path('.qa-config.yml').read_text())['qa']
+        base_url  = cfg['base_url']
+        threshold = str(cfg.get('threshold', 0.01))
+        pages     = json.dumps(cfg.get('pages', ['/']))
+        viewport  = json.dumps(cfg.get('viewport',        {'width': 1280, 'height': 720}))
+        mobile_vp = json.dumps(cfg.get('mobile_viewport', {'width': 375,  'height': 812}))
+
+        with open(os.environ['GITHUB_ENV'], 'a') as ef:
+            ef.write(f'QA_BASE_URL={base_url}\n')
+            ef.write(f'QA_THRESHOLD={threshold}\n')
+            ef.write(f'QA_PAGES={pages}\n')
+            ef.write(f'QA_VIEWPORT={viewport}\n')
+            ef.write(f'QA_MOBILE_VIEWPORT={mobile_vp}\n')
+
+        page_count = len(cfg.get('pages', ['/']))
+        print(f'Parsed config: base_url={base_url}, pages={page_count}, threshold={threshold}')
+
+    # ── 2. Install Playwright (chromium only) ──────────────────────────────────
+    - name: Install Playwright Chromium
+      shell: bash
+      run: npx playwright install chromium --with-deps
+
+    # ── 3. Determine run mode ─────────────────────────────────────────────────
+    - name: Check baseline state
+      id: baseline-check
+      shell: bash
+      run: |
+        if [ "${{ inputs.update-snapshots }}" = "true" ]; then
+          echo "mode=update" >> $GITHUB_OUTPUT
+          echo "Run mode: FORCE UPDATE (input flag set)"
+        elif [ -z "$(ls -A tests/visual-baselines/ 2>/dev/null)" ]; then
+          echo "mode=init" >> $GITHUB_OUTPUT
+          echo "Run mode: INIT (no baselines found — will generate)"
+        else
+          echo "mode=compare" >> $GITHUB_OUTPUT
+          BASELINE_COUNT=$(find tests/visual-baselines -name '*.png' | wc -l)
+          echo "Run mode: COMPARE ($BASELINE_COUNT baseline images found)"
+        fi
+
+    # ── 4. Run tests ──────────────────────────────────────────────────────────
+    - name: Run visual regression tests
+      id: run
+      shell: bash
+      run: |
+        MODE="${{ steps.baseline-check.outputs.mode }}"
+        DIFF_FOUND=false
+        BASELINE_UPDATED=false
+
+        if [ "$MODE" = "compare" ]; then
+          set +e
+          npx playwright test tests/visual-regression.spec.ts \
+            --config playwright.qa.config.ts \
+            --reporter=list,json
+          EXIT_CODE=$?
+          set -e
+          if [ $EXIT_CODE -ne 0 ]; then
+            DIFF_FOUND=true
+          fi
+        else
+          # init or update: generate baselines (always succeeds)
+          npx playwright test tests/visual-regression.spec.ts \
+            --config playwright.qa.config.ts \
+            --update-snapshots \
+            --reporter=list
+          BASELINE_UPDATED=true
+        fi
+
+        echo "diff-found=$DIFF_FOUND"       >> $GITHUB_OUTPUT
+        echo "baseline-updated=$BASELINE_UPDATED" >> $GITHUB_OUTPUT
+
+    # ── 5. Commit new baselines back to branch (init / update mode only) ──────
+    - name: Commit baselines to branch
+      if: steps.run.outputs.baseline-updated == 'true'
+      shell: bash
+      run: |
+        git config user.name  "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add tests/visual-baselines/
+        if git diff --staged --quiet; then
+          echo "No new baselines to commit."
+        else
+          BASELINE_COUNT=$(find tests/visual-baselines -name '*.png' | wc -l)
+          git commit -m "chore(qa): generate visual regression baselines (${BASELINE_COUNT} screenshots)"
+          git push
+          echo "Committed and pushed ${BASELINE_COUNT} baseline screenshots."
+        fi
+
+    # ── 6. Upload artifacts ───────────────────────────────────────────────────
+    - name: Upload screenshots and results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: visual-regression-${{ github.run_id }}
+        path: |
+          tests/visual-baselines/
+          test-results/
+        if-no-files-found: ignore
+        retention-days: 30

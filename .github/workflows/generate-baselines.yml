@@ -1,0 +1,54 @@
+name: Generate Visual Baselines
+
+# Triggered manually to regenerate all baseline screenshots.
+# Run this when:
+#   1. Setting up the QA system for the first time on a branch
+#   2. After intentional visual changes that have been approved
+#
+# The workflow commits the new baselines back to the specified branch.
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to generate baselines for (default: current branch)'
+        required: false
+        default: ''
+      confirm:
+        description: 'Type "yes" to confirm baseline regeneration'
+        required: true
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  generate-baselines:
+    name: Generate Baselines
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.confirm == 'yes' }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref:   ${{ github.event.inputs.branch || github.ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - uses: ./.github/actions/visual-regression
+        with:
+          update-snapshots: 'true'
+
+      - name: Summary
+        run: |
+          BASELINE_COUNT=$(find tests/visual-baselines -name '*.png' 2>/dev/null | wc -l)
+          echo "## Visual Baselines Generated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**${BASELINE_COUNT}** baseline screenshots committed to branch." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Future PRs will compare against these baselines." >> $GITHUB_STEP_SUMMARY

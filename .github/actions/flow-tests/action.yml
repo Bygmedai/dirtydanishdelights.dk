@@ -1,0 +1,91 @@
+name: 'Playwright E2E Flow Tests'
+description: >
+  Runs E2E flow tests defined in .qa-config.yml under the flows: key.
+  If flows is empty, the action succeeds immediately (nothing to test).
+  On failure, uploads screenshots of the broken state as artifacts.
+
+outputs:
+  flows-run:
+    description: 'Number of flows executed'
+    value: ${{ steps.run.outputs.flows-run }}
+  flows-failed:
+    description: 'Number of flows that failed'
+    value: ${{ steps.run.outputs.flows-failed }}
+
+runs:
+  using: composite
+  steps:
+    # ── 1. Parse .qa-config.yml → GITHUB_ENV (using Python shell) ─────────────
+    - name: Parse .qa-config.yml
+      shell: python3 {0}
+      run: |
+        import yaml, json, os, pathlib
+
+        cfg = yaml.safe_load(pathlib.Path('.qa-config.yml').read_text())['qa']
+        base_url = cfg['base_url']
+        flows    = json.dumps(cfg.get('flows', []))
+        flow_count = len(cfg.get('flows', []))
+
+        with open(os.environ['GITHUB_ENV'], 'a') as ef:
+            ef.write(f'QA_BASE_URL={base_url}\n')
+            ef.write(f'QA_FLOWS={flows}\n')
+
+        print(f'Parsed config: base_url={base_url}, flows={flow_count}')
+
+    # ── 2. Skip if no flows defined ───────────────────────────────────────────
+    - name: Check if flows are defined
+      id: check-flows
+      shell: bash
+      run: |
+        FLOW_COUNT=$(python3 -c "import json,os; print(len(json.loads(os.environ['QA_FLOWS'])))")
+        echo "flow-count=$FLOW_COUNT" >> $GITHUB_OUTPUT
+        if [ "$FLOW_COUNT" = "0" ]; then
+          echo "No flows defined — skipping E2E tests."
+        else
+          echo "$FLOW_COUNT flow(s) will be tested."
+        fi
+
+    # ── 3. Install Playwright (only if flows exist) ───────────────────────────
+    - name: Install Playwright Chromium
+      if: steps.check-flows.outputs.flow-count != '0'
+      shell: bash
+      run: npx playwright install chromium --with-deps
+
+    # ── 4. Run flow tests ─────────────────────────────────────────────────────
+    - name: Run E2E flow tests
+      id: run
+      shell: bash
+      run: |
+        FLOW_COUNT="${{ steps.check-flows.outputs.flow-count }}"
+        if [ "$FLOW_COUNT" = "0" ]; then
+          echo "flows-run=0"    >> $GITHUB_OUTPUT
+          echo "flows-failed=0" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+
+        set +e
+        npx playwright test tests/flow-tests.spec.ts \
+          --config playwright.qa.config.ts \
+          --reporter=list,json
+        EXIT_CODE=$?
+        set -e
+
+        # Count failures from results JSON (best-effort)
+        FAILED=0
+        if [ $EXIT_CODE -ne 0 ]; then
+          FAILED=$(python3 -c "import json,pathlib; f=pathlib.Path('test-results/qa-results.json'); d=json.loads(f.read_text()) if f.exists() else {}; print(sum(1 for s in d.get('suites',[]) for t in s.get('specs',[]) if not t.get('ok',True)))" 2>/dev/null || echo 1)
+        fi
+
+        echo "flows-run=$FLOW_COUNT"    >> $GITHUB_OUTPUT
+        echo "flows-failed=$FAILED"     >> $GITHUB_OUTPUT
+        exit $EXIT_CODE
+
+    # ── 5. Upload failure artifacts ───────────────────────────────────────────
+    - name: Upload flow test artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: flow-tests-${{ github.run_id }}
+        path: test-results/
+        if-no-files-found: ignore
+        retention-days: 14
