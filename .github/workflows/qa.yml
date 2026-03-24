@@ -1,0 +1,131 @@
+name: QA Checks
+
+# Runs on every PR to main. Does NOT block merge (no required status checks).
+# Gives Steven and Cowork: screenshots, diffs, flow results, and link report.
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write       # needed for baseline auto-commit on first run
+  pull-requests: write  # needed for PR comments
+
+jobs:
+  # ── Visual Regression ───────────────────────────────────────────────────────
+  visual-regression:
+    name: Visual Regression
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Fetch the PR branch (with write access for baseline auto-commit)
+          ref:   ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - uses: ./.github/actions/visual-regression
+        id: visual
+
+      - name: Post PR comment on diff
+        if: steps.visual.outputs.diff-found == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner:        context.repo.owner,
+              repo:         context.repo.repo,
+              body: [
+                '## ⚠️ Visual Regression Diff Detected',
+                '',
+                'One or more pages differ from the approved baseline.',
+                'Download the **visual-regression** artifact to review diff images.',
+                '',
+                '**If the change is intentional:** trigger `Generate Visual Baselines` workflow on this branch to update baselines.',
+              ].join('\n'),
+            });
+
+      - name: Post PR comment on baseline init
+        if: steps.visual.outputs.baseline-updated == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner:        context.repo.owner,
+              repo:         context.repo.repo,
+              body: [
+                '## 📸 Visual Baselines Generated',
+                '',
+                'No baselines existed — screenshots of the current live site have been',
+                'generated and committed to this branch.',
+                '',
+                'Future PRs will compare against these baselines.',
+                'Review the **visual-regression** artifact to approve the initial screenshots.',
+              ].join('\n'),
+            });
+
+  # ── E2E Flow Tests ───────────────────────────────────────────────────────────
+  flow-tests:
+    name: E2E Flow Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - uses: ./.github/actions/flow-tests
+        id: flows
+
+      - name: Post PR comment on flow failure
+        if: failure() && steps.flows.outputs.flows-run != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner:        context.repo.owner,
+              repo:         context.repo.repo,
+              body: [
+                '## ❌ E2E Flow Test Failure',
+                '',
+                `**${{ steps.flows.outputs.flows-failed }}** of **${{ steps.flows.outputs.flows-run }}** flow(s) failed.`,
+                '',
+                'Check the **flow-tests** artifact for failure screenshots.',
+              ].join('\n'),
+            });
+
+  # ── Broken Link Check ────────────────────────────────────────────────────────
+  link-check:
+    name: Link Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: lycheeverse/lychee-action@v2
+        with:
+          # Plain HTML site — scan all HTML files at root.
+          # External URLs excluded via .lycheeignore.
+          args: >-
+            --verbose
+            --no-progress
+            --exclude-loopback
+            --max-retries 2
+            --timeout 20
+            --exclude-path node_modules
+            --exclude-path tests
+            .
+          fail: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
